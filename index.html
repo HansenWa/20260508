@@ -103,6 +103,10 @@ Vue.createApp({
   data() {
     return {
       activeCategory: '全部',
+      apiUrl: 'https://script.google.com/macros/s/AKfycbxWvcLozqgYCJjgElQQnj7URXIxg6jnHmh2yHu70GD1n8sAETcDME82mk3W_Sc_kyQh/exec', // 請替換成實際的 API 地址
+      loading: false,
+      tableNumber: 'A1',
+      note: '',
       cart: [],   // [{ id, name, emoji, price, qty }]
 
       menu: [
@@ -151,9 +155,42 @@ Vue.createApp({
     placeOrder() {
       alert('訂單已送出！合計 $' + this.totalAmount)
       this.cart = []   // 清空購物車
+    },
+
+    async loadMenu() {
+      this.loading = true
+    try {
+      const res  = await fetch(this.apiUrl + '?action=getMenu')
+      const data = await res.json()
+      if (data.success) {
+        this.menu = data.data
+      }
+    } catch (e) {
+      console.error('載入菜單失敗', e)
+    } finally {
+      this.loading = false
+    }
+  },
+
+  // 送出訂單
+  async submitOrder() {
+    const res = await fetch(this.apiUrl, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'submitOrder',
+        tableNumber: this.tableNumber,
+        items: this.cart,
+        totalAmount: this.totalAmount,
+        note: this.note,
+      })
+    })
+    const data = await res.json()
+    if (data.success) {
+      alert('訂單送出成功！編號：' + data.data.orderId)
+      this.cart = []
     }
   }
-
+  }
 }).mount('#app')
 </script>
 
